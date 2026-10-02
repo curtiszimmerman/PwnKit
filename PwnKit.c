@@ -24,6 +24,10 @@ const char service_interp[] __attribute__((section(".interp"))) = "/lib64/ld-lin
 #ifdef __i386__
 const char service_interp[] __attribute__((section(".interp"))) = "/lib/ld-linux.so.2";
 #endif
+// aarch64 library
+#ifdef __aarch64__
+const char service_interp[] __attribute__((section(".interp"))) = "/lib/ld-linux-aarch64.so.1";
+#endif
 
 int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
 {
@@ -49,10 +53,22 @@ void entry()
     char *cmd;
     int argc;
     char **argv;
+#if defined(__amd64__) || defined(__i386__)
+    // entry() is jumped into directly by ld.so with the stack still in the
+    // ELF startup layout ([argc][argv[0]]...). GCC's prologue here is just
+    // `push rbp; mov rbp,rsp`, so rbp == original_rsp - 8.
     register unsigned long *rbp asm ("rbp");
 
     argc = *(int *)(rbp+1);
     argv = (char **)rbp+2;
+#elif defined(__aarch64__)
+    // Same trick, but AAPCS64 saves the frame record (x29,x30) as a 16-byte
+    // pair, so x29 == original_sp - 16 instead of -8.
+    register unsigned long *x29 asm ("x29");
+
+    argc = *(int *)(x29+2);
+    argv = (char **)x29+3;
+#endif
 
     res = mkdir("GCONV_PATH=.", 0777);
     if (res == -1 && errno != EEXIST)

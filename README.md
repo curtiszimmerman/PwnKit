@@ -35,6 +35,12 @@ Running the exploit against patched versions will yield the following output.
 gcc -shared PwnKit.c -o PwnKit -Wl,-e,entry -fPIC
 ```
 
+Cross-compile for aarch64 (requires `gcc-aarch64-linux-gnu`):
+
+```bash
+aarch64-linux-gnu-gcc -shared PwnKit.c -o PwnKitARM64 -Wl,-e,entry -fPIC
+```
+
 ## Technical Details
 
 - https://blog.qualys.com/vulnerabilities-threat-research/2022/01/25/pwnkit-local-privilege-escalation-vulnerability-discovered-in-polkits-pkexec-cve-2021-4034
